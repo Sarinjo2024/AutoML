@@ -1,10 +1,12 @@
 from flask import Flask, request, render_template
+from flask_cors import CORS
 import netron
 import os
 import torch
 import onnx
 
 app = Flask(__name__)
+CORS(app) # Enable CORS for all domains on all routes
 
 @app.route('/')
 def index():
