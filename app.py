@@ -9,13 +9,23 @@ CORS(app)  # Enable CORS for all domains on all routes
 
 netron_thread = None
 
+def start_netron(model_path):
+    try:
+        netron.start(model_path, address=('0.0.0.0', 8081), browse=False)
+    except Exception as e:
+        print(f"Error starting Netron: {e}")
+
 @app.route('/api/view_model', methods=['GET'])
 def view_model():
     global netron_thread
     model_path = os.path.join('models', 'your_model.onnx')
     
+    # Print model path and directory contents for debugging
+    print(f"Contents of models directory: {os.listdir('models')}")
+    print(f"Model path: {model_path}")
+    
     if netron_thread is None:
-        netron_thread = threading.Thread(target=netron.start, args=(model_path,), kwargs={'port': 8081, 'browse': False})
+        netron_thread = threading.Thread(target=start_netron, args=(model_path,))
         netron_thread.start()
 
     return jsonify({'message': 'Model viewer started', 'url': 'http://localhost:8081'})
