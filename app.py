@@ -1,31 +1,33 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import netron
 import os
-import torch
-import onnx
+import threading
 
 app = Flask(__name__)
-CORS(app) # Enable CORS for all domains on all routes
+CORS(app)  # Enable CORS for all domains on all routes
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+netron_thread = None
 
-@app.route('/view_model')
+@app.route('/api/view_model', methods=['GET'])
 def view_model():
+    global netron_thread
     model_path = os.path.join('models', 'your_model.onnx')
-    netron.start(model_path, port=8081)
-    return 'Model viewer started at http://localhost:8081'
+    
+    if netron_thread is None:
+        netron_thread = threading.Thread(target=netron.start, args=(model_path,), kwargs={'port': 8081, 'browse': False})
+        netron_thread.start()
 
-@app.route('/retrain', methods=['POST'])
+    return jsonify({'message': 'Model viewer started', 'url': 'http://localhost:8081'})
+
+@app.route('/api/retrain', methods=['POST'])
 def retrain():
-    learning_rate = request.form['learning_rate']
-    batch_size = request.form['batch_size']
-    # Here you would add code to retrain your model using the provided parameters
+    data = request.json
+    learning_rate = data.get('learning_rate')
+    batch_size = data.get('batch_size')
+    # Add code to retrain your model using the provided parameters
     print(f'Retraining with learning rate: {learning_rate} and batch size: {batch_size}')
-    # After retraining, you can return the results
-    return f'Model retrained with learning rate: {learning_rate} and batch size: {batch_size}'
+    return jsonify({'message': f'Model retrained with learning rate: {learning_rate} and batch size: {batch_size}'})
 
 if __name__ == '__main__':
     app.run(port=5000)
