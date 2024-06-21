@@ -14,7 +14,23 @@ def start_netron(model_path):
         netron.start(model_path, address=('0.0.0.0', 8081), browse=False)
     except Exception as e:
         print(f"Error starting Netron: {e}")
+        
+@app.route('/api/import_model', methods=['POST'])
+def import_model():
+    if 'modelFile' not in request.files:
+        return jsonify({'message': 'No file part'}), 400
 
+    file = request.files['modelFile']
+    if file.filename == '':
+        return jsonify({'message': 'No selected file'}), 400
+
+    # Save the uploaded file to a specific directory (adjust path as needed)
+    file.save(os.path.join('uploaded_models', file.filename))
+
+    return jsonify({'message': 'Model uploaded successfully'})
+
+if __name__ == '__main__':
+    app.run(port=5000)
 @app.route('/api/view_model', methods=['GET'])
 def view_model():
     global netron_thread
